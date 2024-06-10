@@ -74,6 +74,8 @@ type Options struct {
 	HeadBranchName string `json:"headBranchName"`
 	// Optional list of labels to add to the bump PR
 	Labels []string `json:"labels"`
+	// The GitHub host to use, defaulting to github.com
+	GitHubHost string `json:"gitHubHost"`
 }
 
 // Information needed for gerrit bump
@@ -180,6 +182,9 @@ func validateOptions(o *Options) error {
 			o.HeadBranchName = defaultHeadBranchName
 		}
 	}
+	if o.GitHubHost == "" {
+		o.GitHubHost = "github.com"
+	}
 
 	return nil
 }
@@ -209,7 +214,12 @@ func processGitHub(ctx context.Context, o *Options, prh PRHandler) error {
 		return fmt.Errorf("start secrets agent: %w", err)
 	}
 
-	gc, err := github.NewClient(secret.GetTokenGenerator(o.GitHubToken), secret.Censor, github.DefaultGraphQLEndpoint, github.DefaultAPIEndpoint)
+	gitHubHost := "https://api.github.com"
+	if o.GitHubHost != "" {
+		gitHubHost = fmt.Sprintf("https://%s/api/v3", o.GitHubHost)
+	}
+
+	gc, err := github.NewClient(secret.GetTokenGenerator(o.GitHubToken), secret.Censor, gitHubHost, gitHubHost)
 	if err != nil {
 		return fmt.Errorf("failed to construct GitHub client: %v", err)
 	}
@@ -258,7 +268,7 @@ func processGitHub(ctx context.Context, o *Options, prh PRHandler) error {
 		return nil
 	}
 
-	if err := MinimalGitPush(fmt.Sprintf("https://%s:%s@github.com/%s/%s.git", o.GitHubLogin, string(secret.GetTokenGenerator(o.GitHubToken)()), o.GitHubLogin, o.RemoteName), o.HeadBranchName, stdout, stderr, o.SkipPullRequest); err != nil {
+	if err := MinimalGitPush(fmt.Sprintf("https://%s:%s@%s/%s/%s.git", o.GitHubLogin, string(secret.GetTokenGenerator(o.GitHubToken)()), o.GitHubHost, o.GitHubLogin, o.RemoteName), o.HeadBranchName, stdout, stderr, o.SkipPullRequest); err != nil {
 		return fmt.Errorf("push changes to the remote branch: %w", err)
 	}
 
