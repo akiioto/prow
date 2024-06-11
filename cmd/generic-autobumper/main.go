@@ -326,6 +326,7 @@ func updateReferencesWrapper(ctx context.Context, o *options) (map[string]string
 	if o.ImageRegistryAuth == googleImageRegistryAuth {
 		var err error
 		client, err = google.DefaultClient(ctx, cloudPlatformScope)
+		fmt.Println(client)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create authed client: %v", err)
 		}
