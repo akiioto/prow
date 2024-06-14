@@ -474,7 +474,7 @@ func UpdatePullRequestWithLabels(gc github.Client, org, repo, title, body, sourc
 // HasChanges checks if the current git repo contains any changes
 func HasChanges() (bool, error) {
 	// Configure Git to recognize the /workspace directory as safe
-	configArgs := []string{"config", "--global", "--add", "safe.directory", "/workspace"}
+	configArgs := []string{"config", "--global", "--add", "safe.directory", "'*'"}
 	logrus.WithField("cmd", gitCmd).WithField("args", configArgs).Info("running command ...")
 	configOutput, configErr := exec.Command(gitCmd, configArgs...).CombinedOutput()
 	if configErr != nil {
