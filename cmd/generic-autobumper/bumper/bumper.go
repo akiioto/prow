@@ -473,6 +473,7 @@ func UpdatePullRequestWithLabels(gc github.Client, org, repo, title, body, sourc
 
 // HasChanges checks if the current git repo contains any changes
 func HasChanges() (bool, error) {
+	// Check for changes using git status
 	args := []string{"status", "--porcelain"}
 	logrus.WithField("cmd", gitCmd).WithField("args", args).Info("running command ...")
 	combinedOutput, err := exec.Command(gitCmd, args...).CombinedOutput()
@@ -480,7 +481,21 @@ func HasChanges() (bool, error) {
 		logrus.WithField("cmd", gitCmd).Debugf("output is '%s'", string(combinedOutput))
 		return false, fmt.Errorf("running command %s %s: %w", gitCmd, args, err)
 	}
-	return len(strings.TrimSuffix(string(combinedOutput), "\n")) > 0, nil
+	hasChanges := len(strings.TrimSuffix(string(combinedOutput), "\n")) > 0
+
+	// If there are changes, get the diff
+	if hasChanges {
+		diffArgs := []string{"diff"}
+		logrus.WithField("cmd", gitCmd).WithField("args", diffArgs).Info("running command ...")
+		diffOutput, diffErr := exec.Command(gitCmd, diffArgs...).CombinedOutput()
+		if diffErr != nil {
+			logrus.WithField("cmd", gitCmd).Debugf("output is '%s'", string(diffOutput))
+			return true, fmt.Errorf("running command %s %s: %w", gitCmd, diffArgs, diffErr)
+		}
+		logrus.WithField("cmd", gitCmd).Debugf("diff output is '%s'", string(diffOutput))
+	}
+
+	return hasChanges, nil
 }
 
 // MakeGitCommit runs a sequence of git commands to
