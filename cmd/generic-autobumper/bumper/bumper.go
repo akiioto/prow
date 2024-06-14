@@ -473,13 +473,22 @@ func UpdatePullRequestWithLabels(gc github.Client, org, repo, title, body, sourc
 
 // HasChanges checks if the current git repo contains any changes
 func HasChanges() (bool, error) {
+	// Configure Git to recognize the /workspace directory as safe
+	configArgs := []string{"config", "--global", "--add", "safe.directory", "/workspace"}
+	logrus.WithField("cmd", gitCmd).WithField("args", configArgs).Info("running command ...")
+	configOutput, configErr := exec.Command(gitCmd, configArgs...).CombinedOutput()
+	if configErr != nil {
+		logrus.WithField("cmd", gitCmd).Debugf("output is '%s'", string(configOutput))
+		return false, fmt.Errorf("running command %s %s: %w", gitCmd, configArgs, configErr)
+	}
+
 	// Check for changes using git status
-	args := []string{"status", "--porcelain"}
-	logrus.WithField("cmd", gitCmd).WithField("args", args).Info("running command ...")
-	combinedOutput, err := exec.Command(gitCmd, args...).CombinedOutput()
+	statusArgs := []string{"status", "--porcelain"}
+	logrus.WithField("cmd", gitCmd).WithField("args", statusArgs).Info("running command ...")
+	combinedOutput, err := exec.Command(gitCmd, statusArgs...).CombinedOutput()
 	if err != nil {
 		logrus.WithField("cmd", gitCmd).Debugf("output is '%s'", string(combinedOutput))
-		return false, fmt.Errorf("running command %s %s: %w", gitCmd, args, err)
+		return false, fmt.Errorf("running command %s %s: %w", gitCmd, statusArgs, err)
 	}
 	hasChanges := len(strings.TrimSuffix(string(combinedOutput), "\n")) > 0
 
