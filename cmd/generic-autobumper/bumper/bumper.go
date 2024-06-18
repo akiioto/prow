@@ -474,6 +474,23 @@ func UpdatePullRequestWithLabels(gc github.Client, org, repo, title, body, sourc
 // HasChanges checks if the current git repo contains any changes
 func HasChanges() (bool, error) {
 	// Configure Git to recognize the /workspace directory as safe
+	additionalArgs := []string{"config", "--global", "user.email", "dl_666c0cf3e82c7d0136da22ea@global.corp.sap"}
+	logrus.WithField("cmd", gitCmd).WithField("args", additionalArgs).Info("running command ...")
+	additionalOutput, configErr := exec.Command(gitCmd, additionalArgs...).CombinedOutput()
+	if configErr != nil {
+		logrus.WithField("cmd", gitCmd).Debugf("output is '%s'", string(additionalOutput))
+		return false, fmt.Errorf("running command %s %s: %w", gitCmd, additionalArgs, configErr)
+	}
+
+	additionalArgs2 := []string{"config", "--global", "user.name", "autobumper-github-tools-sap-serviceuser"}
+	logrus.WithField("cmd", gitCmd).WithField("args", additionalArgs2).Info("running command ...")
+	additionalOutput2, configErr := exec.Command(gitCmd, additionalArgs2...).CombinedOutput()
+	if configErr != nil {
+		logrus.WithField("cmd", gitCmd).Debugf("output is '%s'", string(additionalOutput2))
+		return false, fmt.Errorf("running command %s %s: %w", gitCmd, additionalArgs2, configErr)
+	}
+
+	// Configure Git to recognize the /workspace directory as safe
 	configArgs := []string{"config", "--global", "--add", "safe.directory", "'*'"}
 	logrus.WithField("cmd", gitCmd).WithField("args", configArgs).Info("running command ...")
 	configOutput, configErr := exec.Command(gitCmd, configArgs...).CombinedOutput()

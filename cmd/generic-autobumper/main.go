@@ -366,13 +366,13 @@ func updateReferences(imageBumperCli imageBumper, filterRegexp *regexp.Regexp, o
 		return nil
 	}
 	updateYAMLFile := func(name string) error {
-		if strings.HasSuffix(name, ".yaml") && !isUnderPath(name, o.ExcludedConfigPaths) {
+		if (strings.HasSuffix(name, ".yaml") || strings.HasSuffix(name, ".yml")) && !isUnderPath(name, o.ExcludedConfigPaths) {
 			return updateFile(name)
 		}
 		return nil
 	}
 
-	// Updated all .yaml files under the included config paths but not under excluded config paths.
+	// Updated all .yaml and .yml files under the included config paths but not under excluded config paths.
 	for _, path := range o.IncludedConfigPaths {
 		info, err := os.Stat(path)
 		if err != nil {

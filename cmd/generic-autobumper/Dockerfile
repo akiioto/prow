@@ -18,5 +18,11 @@ RUN go build -o generic-autobumper ./cmd/generic-autobumper
 
 RUN ls -alh
 
-# Set the entry point to the built binary
-ENTRYPOINT ["/app/generic-autobumper"]
+# Kopiowanie skryptu entrypoint
+COPY cmd/generic-autobumper/entrypoint.sh /entrypoint.sh
+
+# Nadanie uprawnień do wykonania skryptu
+RUN chmod +x /entrypoint.sh
+
+# Ustawienie skryptu jako entrypoint
+ENTRYPOINT ["/entrypoint.sh", "/app/generic-autobumper"]
